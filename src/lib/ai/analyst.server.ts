@@ -11,14 +11,9 @@ import type { Database } from "@/integrations/supabase/types";
 import { getAiProvider, type ChatMessage } from "./provider.server";
 import { assertAiRateLimit, recordUsage } from "../usage.server";
 
-export const ANALYST_MODES = [
-  "chat",
-  "summarize",
-  "key_info",
-  "action_items",
-  "explain",
-] as const;
-export type AnalystMode = (typeof ANALYST_MODES)[number];
+import { type AnalystMode } from "./modes";
+
+export type { AnalystMode };
 
 export type Citation = {
   documentId: string;
