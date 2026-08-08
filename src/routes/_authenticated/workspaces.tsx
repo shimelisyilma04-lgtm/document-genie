@@ -179,8 +179,8 @@ function WorkspacesPage() {
               Create workspace
             </Button>
           </DialogFooter>
-        </DialogFooter>
         </DialogContent>
+
       </Dialog>
     </AppShell>
   );
