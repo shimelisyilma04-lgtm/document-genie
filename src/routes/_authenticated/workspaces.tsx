@@ -57,7 +57,11 @@ function WorkspacesPage() {
       return;
     }
     createWorkspace.mutate(
-      { name: trimmed.slice(0, 80), description: description.trim().slice(0, 300) || undefined },
+      {
+        name: trimmed.slice(0, 80),
+        ...(description.trim() ? { description: description.trim().slice(0, 300) } : {}),
+      },
+
       {
         onSuccess: () => {
           toast.success("Workspace created.");
