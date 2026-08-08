@@ -206,9 +206,9 @@ export function resolveExtractor(fileName: string, mimeType: string): Extractor 
 /* -------------------------------- helpers -------------------------------- */
 
 /** Splits raw text into paragraph blocks, tracking markdown-ish headings. */
-function splitIntoSections(input: string): { text: string; heading?: string }[] {
+function splitIntoSections(input: string): { text: string; heading?: string | undefined }[] {
   const lines = input.split("\n");
-  const out: { text: string; heading?: string }[] = [];
+  const out: { text: string; heading?: string | undefined }[] = [];
   let heading: string | undefined;
   let buffer: string[] = [];
 

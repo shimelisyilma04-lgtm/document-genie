@@ -8,9 +8,10 @@
 
 export type TextBlock = {
   text: string;
-  page?: number;
-  heading?: string;
+  page?: number | undefined;
+  heading?: string | undefined;
 };
+
 
 export type Chunk = {
   chunkIndex: number;
