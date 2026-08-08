@@ -83,8 +83,9 @@ function AuthPage() {
           password: parsed.data.password,
           options: {
             emailRedirectTo: `${window.location.origin}${destination}`,
-            data: fullName.trim() ? { full_name: fullName.trim() } : undefined,
+            ...(fullName.trim() ? { data: { full_name: fullName.trim() } } : {}),
           },
+
         });
         if (error) throw error;
         if (!data.session) {
