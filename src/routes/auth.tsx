@@ -136,21 +136,27 @@ function AuthPage() {
   async function handleGoogle() {
     setGooglePending(true);
     try {
+      // Remember where the user wanted to land; the OAuth flow returns to /auth.
+      window.sessionStorage.setItem(PENDING_KEY, destination);
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: `${window.location.origin}/auth`,
       });
       if (result.error) {
+        window.sessionStorage.removeItem(PENDING_KEY);
         toast.error(result.error.message ?? "Google sign-in failed.");
         return;
       }
       if (result.redirected) return;
+      window.sessionStorage.removeItem(PENDING_KEY);
       navigate({ to: destination, replace: true });
     } catch (error) {
+      window.sessionStorage.removeItem(PENDING_KEY);
       toast.error(error instanceof Error ? error.message : "Google sign-in failed.");
     } finally {
       setGooglePending(false);
     }
   }
+
 
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
