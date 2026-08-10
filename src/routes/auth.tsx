@@ -45,6 +45,8 @@ function safeRedirect(value: string | undefined): string {
   return value;
 }
 
+const PENDING_KEY = "omniparse:auth-redirect";
+
 function AuthPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
@@ -60,13 +62,33 @@ function AuthPage() {
 
   useEffect(() => {
     let active = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (active && data.session) navigate({ to: destination, replace: true });
+
+    const go = () => {
+      if (!active) return;
+      const stored = window.sessionStorage.getItem(PENDING_KEY);
+      window.sessionStorage.removeItem(PENDING_KEY);
+      navigate({ to: safeRedirect(stored ?? destination), replace: true });
+    };
+
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (data.session) go();
+      })
+      .catch(() => {
+        /* no session available — stay on the auth page */
+      });
+
+    const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) go();
     });
+
     return () => {
       active = false;
+      subscription.subscription.unsubscribe();
     };
   }, [destination, navigate]);
+
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
