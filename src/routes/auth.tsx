@@ -262,7 +262,7 @@ function AuthPage() {
                 ) : (
                   <GoogleMark />
                 )}
-                {mode === "signup" ? "Create account with Google" : "Sign in with Google"}
+                Continue with Google
               </Button>
 
               <p className="mt-8 text-center text-xs text-muted-foreground">
