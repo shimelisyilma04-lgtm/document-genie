@@ -161,7 +161,8 @@ export function Overview() {
                     <div
                       className={`h-full rounded-full ${
                         ratio >= 0.9 ? 'bg-red-500' : ratio >= 0.7 ? 'bg-amber-500' : 'bg-blue-500'
-                      }`
+                      }`}
+
                       style={{ width: `${Math.min(ratio * 100, 100)}%` }}
                     />
                   </div>
