@@ -45,6 +45,8 @@ function safeRedirect(value: string | undefined): string {
   return value;
 }
 
+const PENDING_KEY = "omniparse:auth-redirect";
+
 function AuthPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
@@ -60,13 +62,33 @@ function AuthPage() {
 
   useEffect(() => {
     let active = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (active && data.session) navigate({ to: destination, replace: true });
+
+    const go = () => {
+      if (!active) return;
+      const stored = window.sessionStorage.getItem(PENDING_KEY);
+      window.sessionStorage.removeItem(PENDING_KEY);
+      navigate({ to: safeRedirect(stored ?? destination), replace: true });
+    };
+
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (data.session) go();
+      })
+      .catch(() => {
+        /* no session available — stay on the auth page */
+      });
+
+    const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) go();
     });
+
     return () => {
       active = false;
+      subscription.subscription.unsubscribe();
     };
   }, [destination, navigate]);
+
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -114,21 +136,27 @@ function AuthPage() {
   async function handleGoogle() {
     setGooglePending(true);
     try {
+      // Remember where the user wanted to land; the OAuth flow returns to /auth.
+      window.sessionStorage.setItem(PENDING_KEY, destination);
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: `${window.location.origin}/auth`,
       });
       if (result.error) {
+        window.sessionStorage.removeItem(PENDING_KEY);
         toast.error(result.error.message ?? "Google sign-in failed.");
         return;
       }
       if (result.redirected) return;
+      window.sessionStorage.removeItem(PENDING_KEY);
       navigate({ to: destination, replace: true });
     } catch (error) {
+      window.sessionStorage.removeItem(PENDING_KEY);
       toast.error(error instanceof Error ? error.message : "Google sign-in failed.");
     } finally {
       setGooglePending(false);
     }
   }
+
 
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
@@ -252,6 +280,7 @@ function AuthPage() {
               </div>
 
               <Button
+                type="button"
                 variant="outline"
                 className="w-full"
                 onClick={handleGoogle}
@@ -262,8 +291,13 @@ function AuthPage() {
                 ) : (
                   <GoogleMark />
                 )}
-                Continue with Google
+                {mode === "signup" ? "Create account with Google" : "Sign in with Google"}
               </Button>
+
+              <p className="mt-3 text-center text-xs text-muted-foreground">
+                Google accounts work for both creating an account and signing in.
+              </p>
+
 
               <p className="mt-8 text-center text-xs text-muted-foreground">
                 <Link to="/" className="inline-flex items-center gap-1 hover:text-foreground">
