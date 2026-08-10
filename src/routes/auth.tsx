@@ -280,6 +280,7 @@ function AuthPage() {
               </div>
 
               <Button
+                type="button"
                 variant="outline"
                 className="w-full"
                 onClick={handleGoogle}
@@ -290,8 +291,13 @@ function AuthPage() {
                 ) : (
                   <GoogleMark />
                 )}
-                Continue with Google
+                {mode === "signup" ? "Create account with Google" : "Sign in with Google"}
               </Button>
+
+              <p className="mt-3 text-center text-xs text-muted-foreground">
+                Google accounts work for both creating an account and signing in.
+              </p>
+
 
               <p className="mt-8 text-center text-xs text-muted-foreground">
                 <Link to="/" className="inline-flex items-center gap-1 hover:text-foreground">
