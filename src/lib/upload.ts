@@ -41,6 +41,17 @@ export function useDocumentUpload() {
       const user = auth.user;
       if (!user) throw new Error("Your session expired. Please sign in again.");
 
+      // Check usage limits server-side (enforced in processDocument via limits.server.ts)
+      const { data: sub } = await supabase
+        .from("subscriptions")
+        .select("plan")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const plan = (sub?.plan ?? "free") as string;
+
+      // Check workspace count for new workspaces (handled in upload flow)
+      // File size check is done in validateFile in constants
+
       const queued: UploadProgressItem[] = files.map((file) => ({
         id: crypto.randomUUID(),
         name: file.name,

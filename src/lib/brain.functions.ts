@@ -2,37 +2,33 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertAiRateLimit } from "@/lib/usage.server";
 import { assertCanSendAiMessage } from "@/lib/usage/limits.server";
 
-const askSchema = z.object({
+const askBrainSchema = z.object({
   question: z.string().trim().min(2).max(4000),
-  documentIds: z.array(z.string().uuid()).min(1).max(10),
+  documentIds: z.array(z.string().uuid()).optional(),
   conversationId: z.string().uuid().nullable().optional(),
   workspaceId: z.string().uuid().nullable().optional(),
-  mode: z.enum(["chat", "summarize", "key_info", "action_items", "explain"]).optional(),
 });
 
-export const askAnalyst = createServerFn({ method: "POST" })
+export const askCompanyBrain = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => askSchema.parse(input))
+  .inputValidator((input: unknown) => askBrainSchema.parse(input))
   .handler(async ({ data, context }) => {
-    // Check usage limits
     const plan = (context.subscription?.plan as "free" | "starter" | "pro" | "business") ?? "free";
     await assertCanSendAiMessage(context.supabase, context.userId, plan);
 
-    const { askAnalyst: run } = await import("@/lib/ai/analyst.server");
+    const { askCompanyBrain: run } = await import("@/lib/ai/brain.server");
     try {
       return await run(context.supabase, context.userId, {
         question: data.question,
-        documentIds: data.documentIds,
+        documentIds: data.documentIds ?? [],
         conversationId: data.conversationId ?? null,
         workspaceId: data.workspaceId ?? null,
-        ...(data.mode ? { mode: data.mode } : {}),
       });
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "The AI analyst could not answer right now.";
+        error instanceof Error ? error.message : "The Company Brain could not answer right now.";
       throw new Error(message);
     }
   });

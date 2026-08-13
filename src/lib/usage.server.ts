@@ -10,6 +10,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
 type UsageEventType = Database["public"]["Enums"]["usage_event_type"];
+type AiEmployeeType = Database["public"]["Enums"]["ai_employee"];
 
 export type UsageEventInput = {
   userId: string;
@@ -19,6 +20,7 @@ export type UsageEventInput = {
   completionTokens?: number;
   documentId?: string | null;
   conversationId?: string | null;
+  employeeType?: AiEmployeeType | null;
   model?: string | null;
   metadata?: Record<string, unknown>;
 };
@@ -34,6 +36,7 @@ export async function recordUsage(event: UsageEventInput): Promise<void> {
       completion_tokens: event.completionTokens ?? 0,
       document_id: event.documentId ?? null,
       conversation_id: event.conversationId ?? null,
+      employee_type: event.employeeType ?? null,
       model: event.model ?? null,
       metadata: (event.metadata ?? {}) as never,
     });

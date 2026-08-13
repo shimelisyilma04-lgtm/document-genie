@@ -253,9 +253,36 @@ export type Database = {
         }
         Relationships: []
       }
+      storage_usage: {
+        Row: {
+          bytes_used: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bytes_used?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bytes_used?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storage_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean
+          canceled_at: string | null
           created_at: string
           current_period_end: string
           current_period_start: string
@@ -270,6 +297,7 @@ export type Database = {
         }
         Insert: {
           cancel_at_period_end?: boolean
+          canceled_at?: string | null
           created_at?: string
           current_period_end?: string
           current_period_start?: string
@@ -284,6 +312,7 @@ export type Database = {
         }
         Update: {
           cancel_at_period_end?: boolean
+          canceled_at?: string | null
           created_at?: string
           current_period_end?: string
           current_period_start?: string
@@ -298,18 +327,55 @@ export type Database = {
         }
         Relationships: []
       }
+      team_members: {
+        Row: {
+          email: string
+          id: string
+          invited_at: string
+          joined_at: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          workspace_id: string
+        }
+        Insert: {
+          email: string
+          id?: string
+          invited_at?: string
+          joined_at?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          workspace_id: string
+        }
+        Update: {
+          email?: string
+          id?: string
+          invited_at?: string
+          joined_at?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       usage_events: {
         Row: {
           completion_tokens: number
           conversation_id: string | null
           created_at: string
           document_id: string | null
+          employee_type: Database["public"]["Enums"]["ai_employee"] | null
           event_type: Database["public"]["Enums"]["usage_event_type"]
           id: string
           metadata: Json
           model: string | null
           prompt_tokens: number
           quantity: number
+          tokens_used: number
           user_id: string
         }
         Insert: {
@@ -317,12 +383,14 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string
           document_id?: string | null
+          employee_type?: Database["public"]["Enums"]["ai_employee"] | null
           event_type: Database["public"]["Enums"]["usage_event_type"]
           id?: string
           metadata?: Json
           model?: string | null
           prompt_tokens?: number
           quantity?: number
+          tokens_used?: number
           user_id: string
         }
         Update: {
@@ -330,12 +398,14 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string
           document_id?: string | null
+          employee_type?: Database["public"]["Enums"]["ai_employee"] | null
           event_type?: Database["public"]["Enums"]["usage_event_type"]
           id?: string
           metadata?: Json
           model?: string | null
           prompt_tokens?: number
           quantity?: number
+          tokens_used?: number
           user_id?: string
         }
         Relationships: [
@@ -394,6 +464,34 @@ export type Database = {
     }
     Functions: {
       bootstrap_account: { Args: never; Returns: undefined }
+      get_monthly_usage: {
+        Args: { _user_id: string; _event_type: Database["public"]["Enums"]["usage_event_type"] }
+        Returns: number
+      }
+      get_plan_limits: {
+        Args: { _plan: Database["public"]["Enums"]["subscription_plan"] }
+        Returns: {
+          ai_messages_per_month: number
+          documents_per_month: number
+          max_workspaces: number
+          pages_per_document: number
+          storage_bytes: number
+          team_members: number
+        }
+      }
+      search_company_brain: {
+        Args: { _limit?: number; _query: string; _user_id: string }
+        Returns: {
+          chunk_index: number
+          content: string
+          document_id: string
+          document_name: string
+          heading: string
+          id: string
+          page_number: number
+          rank: number
+        }[]
+      }
       search_document_chunks: {
         Args: { _document_ids: string[]; _limit?: number; _query: string }
         Returns: {
@@ -408,6 +506,7 @@ export type Database = {
       }
     }
     Enums: {
+      ai_employee: "writing" | "business_analyst" | "hr" | "sales" | "training" | "legal"
       document_status: "uploading" | "processing" | "ready" | "failed"
       message_role: "user" | "assistant" | "system"
       subscription_plan: "free" | "starter" | "pro" | "business"
@@ -422,6 +521,7 @@ export type Database = {
         | "document_processed"
         | "tokens_consumed"
         | "storage_bytes"
+      user_role: "owner" | "admin" | "member" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -549,6 +649,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      ai_employee: ["writing", "business_analyst", "hr", "sales", "training", "legal"],
       document_status: ["uploading", "processing", "ready", "failed"],
       message_role: ["user", "assistant", "system"],
       subscription_plan: ["free", "starter", "pro", "business"],
@@ -565,6 +666,7 @@ export const Constants = {
         "tokens_consumed",
         "storage_bytes",
       ],
+      user_role: ["owner", "admin", "member", "viewer"],
     },
   },
 } as const

@@ -2,37 +2,37 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertAiRateLimit } from "@/lib/usage.server";
 import { assertCanSendAiMessage } from "@/lib/usage/limits.server";
 
-const askSchema = z.object({
-  question: z.string().trim().min(2).max(4000),
-  documentIds: z.array(z.string().uuid()).min(1).max(10),
+const askEmployeeSchema = z.object({
+  employeeType: z.enum(["writing", "business_analyst", "hr", "sales", "training", "legal"]),
+  task: z.string().trim().min(2).max(4000),
+  documentIds: z.array(z.string().uuid()).min(1).max(20),
   conversationId: z.string().uuid().nullable().optional(),
   workspaceId: z.string().uuid().nullable().optional(),
-  mode: z.enum(["chat", "summarize", "key_info", "action_items", "explain"]).optional(),
 });
 
-export const askAnalyst = createServerFn({ method: "POST" })
+export const askEmployee = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => askSchema.parse(input))
+  .inputValidator((input: unknown) => askEmployeeSchema.parse(input))
   .handler(async ({ data, context }) => {
-    // Check usage limits
     const plan = (context.subscription?.plan as "free" | "starter" | "pro" | "business") ?? "free";
     await assertCanSendAiMessage(context.supabase, context.userId, plan);
 
-    const { askAnalyst: run } = await import("@/lib/ai/analyst.server");
+    const { askEmployee: run } = await import("@/lib/ai/employees/service.server");
     try {
-      return await run(context.supabase, context.userId, {
-        question: data.question,
+      return await run({
+        userId: context.userId,
+        supabase: context.supabase,
+        employeeType: data.employeeType,
+        task: data.task,
         documentIds: data.documentIds,
         conversationId: data.conversationId ?? null,
         workspaceId: data.workspaceId ?? null,
-        ...(data.mode ? { mode: data.mode } : {}),
       });
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "The AI analyst could not answer right now.";
+        error instanceof Error ? error.message : "The AI employee could not complete this task.";
       throw new Error(message);
     }
   });

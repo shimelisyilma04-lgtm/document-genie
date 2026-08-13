@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect } from "react";
-import { ArrowRight, Files, FolderKanban, MessagesSquare, Sparkles } from "lucide-react";
+import { ArrowRight, Bot, Brain, Files, FolderKanban, MessagesSquare, Sparkles } from "lucide-react";
 
 import { AppShell } from "@/components/app/AppShell";
 import { DocumentCard } from "@/components/documents/DocumentCard";
@@ -105,6 +105,40 @@ function DashboardPage() {
               <p className="font-display mt-3 text-3xl font-semibold">{value}</p>
             </Link>
           ))}
+        </div>
+
+        {/* AI Employees + Company Brain quick-access */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Link
+            to="/employees"
+            className="surface-panel flex items-center gap-4 p-5 hover:shadow-lift"
+          >
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gold/10">
+              <Bot className="size-5 text-gold" />
+            </div>
+            <div>
+              <p className="font-display text-base font-semibold">AI Employees</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Writing, HR, Sales, Legal — all powered by your documents.
+              </p>
+            </div>
+            <ArrowRight className="ml-auto size-4 shrink-0 text-muted-foreground" />
+          </Link>
+          <Link
+            to="/brain"
+            className="surface-panel flex items-center gap-4 p-5 hover:shadow-lift"
+          >
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gold/10">
+              <Brain className="size-5 text-gold" />
+            </div>
+            <div>
+              <p className="font-display text-base font-semibold">Company Brain</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Ask questions across all your documents at once.
+              </p>
+            </div>
+            <ArrowRight className="ml-auto size-4 shrink-0 text-muted-foreground" />
+          </Link>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">

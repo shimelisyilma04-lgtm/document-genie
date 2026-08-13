@@ -3,12 +3,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import {
   BarChart3,
+  Bot,
+  Brain,
+  Files,
   FolderKanban,
   LayoutDashboard,
   LogOut,
   Menu,
   MessagesSquare,
-  Files,
+  Users,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -23,8 +26,11 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { to: "/documents", label: "Documents", icon: Files },
+  { to: "/employees", label: "AI Employees", icon: Bot },
+  { to: "/brain", label: "Company Brain", icon: Brain },
   { to: "/workspaces", label: "Workspaces", icon: FolderKanban },
   { to: "/conversations", label: "Conversations", icon: MessagesSquare },
+  { to: "/team", label: "Team", icon: Users },
   { to: "/usage", label: "Usage", icon: BarChart3 },
 ] as const;
 

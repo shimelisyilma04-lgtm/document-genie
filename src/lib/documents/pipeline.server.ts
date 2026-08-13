@@ -10,6 +10,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { chunkBlocks, countWords } from "./chunker";
 import { ExtractionError, resolveExtractor } from "./extractors.server";
 import { recordUsage } from "../usage.server";
+import { assertCanUploadDocument, assertDocumentPageCount } from "../usage/limits.server";
 
 export type ProcessResult = {
   documentId: string;
@@ -34,6 +35,14 @@ export async function processDocument(
   if (loadError) throw new Error(loadError.message);
   if (!document) throw new Error("Document not found.");
 
+  // Get user plan for limit enforcement
+  const { data: sub } = await supabase
+    .from("subscriptions")
+    .select("plan")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const plan = (sub?.plan ?? "free") as "free" | "starter" | "pro" | "business";
+
   await supabase
     .from("documents")
     .update({ status: "processing", error_message: null })
@@ -46,12 +55,20 @@ export async function processDocument(
     }
     const bytes = new Uint8Array(await download.data.arrayBuffer());
 
+    // Enforce usage limits before completing processing
+    await assertCanUploadDocument(supabase, userId, plan, document.file_size);
+
     const extractor = resolveExtractor(document.original_name, document.mime_type);
     const extraction = await extractor.extract({
       bytes,
       name: document.original_name,
       mimeType: document.mime_type,
     });
+
+    // Check page count limit
+    if (extraction.pageCount !== null) {
+      await assertDocumentPageCount(extraction.pageCount, plan);
+    }
 
     const chunks = chunkBlocks(extraction.blocks);
     if (!chunks.length) {

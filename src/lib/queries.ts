@@ -279,3 +279,81 @@ export function useUsageSummary(days = 30) {
     },
   });
 }
+
+/* ---------------------------------- team -------------------------------- */
+
+export type TeamMember = Database["public"]["Tables"]["team_members"]["Row"];
+
+export function useTeamMembers(workspaceId: string | null) {
+  return useQuery({
+    enabled: Boolean(workspaceId),
+    queryKey: ["team-members", workspaceId],
+    queryFn: async () =>
+      workspaceId
+        ? (unwrap(
+            await supabase
+              .from("team_members")
+              .select("*")
+              .eq("workspace_id", workspaceId)
+              .order("invited_at", { ascending: false }),
+          ) as TeamMember[])
+        : [],
+  });
+}
+
+export function useInviteTeamMember() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      workspaceId,
+      email,
+      role,
+    }: {
+      workspaceId: string;
+      email: string;
+      role?: Database["public"]["Enums"]["user_role"];
+    }) => {
+      const { error } = await supabase
+        .from("team_members")
+        .insert({ workspace_id: workspaceId, email, role: role ?? "member" });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_: unknown, vars: { workspaceId: string }) =>
+      queryClient.invalidateQueries({ queryKey: ["team-members", vars.workspaceId] }),
+  });
+}
+
+export function useRemoveTeamMember() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, workspaceId }: { id: string; workspaceId: string }) => {
+      const { error } = await supabase.from("team_members").delete().eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_: unknown, vars: { workspaceId: string }) =>
+      queryClient.invalidateQueries({ queryKey: ["team-members", vars.workspaceId] }),
+  });
+}
+
+export function useUpdateTeamMemberRole() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      role,
+      workspaceId,
+    }: {
+      id: string;
+      role: Database["public"]["Enums"]["user_role"];
+      workspaceId: string;
+    }) => {
+      const { error } = await supabase
+        .from("team_members")
+        .update({ role })
+        .eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_: unknown, vars: { workspaceId: string }) =>
+      queryClient.invalidateQueries({ queryKey: ["team-members", vars.workspaceId] }),
+  });
+}
